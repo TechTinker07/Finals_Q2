@@ -45,3 +45,12 @@ The following issues were corrected in the implementation:
   
 ## About the Project
 This Todo Management System is a simple and functional web application designed to help users manage daily tasks more efficiently. It allows users to add, edit, update, and delete todos while maintaining a clean and responsive interface. The project also demonstrates routing, reusable components, theme switching, form handling, and frontend-backend integration as part of a complete full-stack application.
+
+## Bonus Challenge A
+The application also includes the Focus-Flow Constraint bonus challenge:
+- A maximum of 5 active tasks is allowed at a time
+- Tasks must be completed in the order they were created
+- Completed tasks are automatically removed after 15 seconds
+## Bonus Challenge A Support
+The backend was updated to support task creation order by including a `CreatedAt` field in the todo model.
+
