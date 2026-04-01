@@ -428,3 +428,21 @@ body {
     padding: 20px;
   }
 }
+.warning-text {
+  grid-column: 1 / -1;
+  color: #b45f06;
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.todo-form button:disabled,
+.todo-actions button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+.warning-text {
+  grid-column: 1 / -1;
+  color: #b45f06;
+  font-size: 0.9rem;
+  font-weight: 700;
+}

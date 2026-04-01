@@ -4,11 +4,15 @@ import type { Todo } from "../types/todo";
 type TodoContextType = {
   todos: Todo[];
   fetchTodos: () => Promise<void>;
-  addTodo: (title: string) => Promise<void>;
+  addTodo: (title: string) => Promise<boolean>;
   toggleTodo: (id: string) => Promise<void>;
   deleteTodo: (id: string) => Promise<void>;
   editTodo: (id: string, title: string) => Promise<void>;
+  canAddTodo: boolean;
+  warningMessage: string;
+  isNextCompletable: (id: string) => boolean;
 };
+
 
 export const TodoContext = createContext<TodoContextType | undefined>(undefined);
 
@@ -16,6 +20,7 @@ const API_URL = "https://localhost:7229/api/todos";
 
 export function TodoProvider({ children }: { children: ReactNode }) {
   const [todos, setTodos] = useState<Todo[]>([]);
+  const [warningMessage, setWarningMessage] = useState("");
 
   const fetchTodos = async () => {
     const res = await fetch(API_URL);
@@ -25,25 +30,72 @@ export function TodoProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const activeTodos = todos.filter((t) => !t.completed);
+  const canAddTodo = activeTodos.length < 5;
+
+  const getPendingTodosInOrder = () => {
+    return [...todos]
+      .filter((t) => !t.completed)
+      .sort((a, b) => {
+        const aTime = new Date(a.createdAt ?? 0).getTime();
+        const bTime = new Date(b.createdAt ?? 0).getTime();
+        return aTime - bTime;
+      });
+  };
+
+  const isNextCompletable = (id: string) => {
+    const pendingTodos = getPendingTodosInOrder();
+    if (pendingTodos.length === 0) return false;
+    return pendingTodos[0].id === id;
+  };
+
   const addTodo = async (title: string) => {
+  if (!canAddTodo) {
+    setWarningMessage("You can only have a maximum of 5 active tasks.");
+    return false;
+  }
+
   const res = await fetch(API_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ title, completed: false }),
+    body: JSON.stringify({
+      title,
+      completed: false,
+      createdAt: new Date().toISOString(),
+    }),
   });
 
   if (res.ok) {
+    setWarningMessage("");
     await fetchTodos();
-  } else {
-    console.error("Failed to add todo");
+    return true;
   }
+
+  setWarningMessage("Failed to add todo.");
+  return false;
 };
+
+
+  const deleteTodo = async (id: string) => {
+    const res = await fetch(`${API_URL}/${id}`, {
+      method: "DELETE",
+    });
+
+    if (res.ok) {
+      setTodos((prev) => prev.filter((t) => t.id !== id));
+    }
+  };
 
   const toggleTodo = async (id: string) => {
     const todo = todos.find((t) => t.id === id);
     if (!todo) return;
+
+    if (!todo.completed && !isNextCompletable(id)) {
+      setWarningMessage("Tasks must be completed in the order they were created.");
+      return;
+    }
 
     const res = await fetch(`${API_URL}/${id}`, {
       method: "PUT",
@@ -53,21 +105,19 @@ export function TodoProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({
         title: todo.title,
         completed: !todo.completed,
+        createdAt: todo.createdAt,
       }),
     });
 
     if (res.ok) {
+      setWarningMessage("");
       await fetchTodos();
-    }
-  };
 
-  const deleteTodo = async (id: string) => {
-    const res = await fetch(`${API_URL}/${id}`, {
-      method: "DELETE",
-    });
-
-    if (res.ok) {
-      setTodos((prev) => prev.filter((t) => t.id !== id));
+      if (!todo.completed) {
+        setTimeout(async () => {
+          await deleteTodo(id);
+        }, 15000);
+      }
     }
   };
 
@@ -83,6 +133,7 @@ export function TodoProvider({ children }: { children: ReactNode }) {
       body: JSON.stringify({
         title,
         completed: todo.completed,
+        createdAt: todo.createdAt,
       }),
     });
 
@@ -99,7 +150,17 @@ export function TodoProvider({ children }: { children: ReactNode }) {
 
   return (
     <TodoContext.Provider
-      value={{ todos, fetchTodos, addTodo, toggleTodo, deleteTodo, editTodo }}
+      value={{
+        todos,
+        fetchTodos,
+        addTodo,
+        toggleTodo,
+        deleteTodo,
+        editTodo,
+        canAddTodo,
+        warningMessage,
+        isNextCompletable,
+      }}
     >
       {children}
     </TodoContext.Provider>

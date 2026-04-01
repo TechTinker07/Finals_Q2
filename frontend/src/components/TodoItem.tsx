@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom";
 import { useTodos } from "../hooks/useTodos";
 import type { Todo } from "../types/todo";
 
@@ -8,17 +7,16 @@ type TodoItemProps = {
 };
 
 export default function TodoItem({ todo, onEdit }: TodoItemProps) {
-  const { toggleTodo, deleteTodo } = useTodos();
-  const navigate = useNavigate();
+  const { toggleTodo, deleteTodo, isNextCompletable } = useTodos();
+
+  const canToggle = todo.completed || isNextCompletable(todo.id);
 
   const handleToggle = async () => {
     await toggleTodo(todo.id);
-    navigate("/");
   };
 
   const handleDelete = async () => {
     await deleteTodo(todo.id);
-    navigate("/");
   };
 
   return (
@@ -29,11 +27,11 @@ export default function TodoItem({ todo, onEdit }: TodoItemProps) {
       </div>
 
       <div className="todo-actions">
-        <button onClick={handleToggle}>
-          {todo.completed ? "Mark Pending" : "Toggle"}
+        <button type="button" onClick={handleToggle} disabled={!canToggle}>
+          {todo.completed ? "Completed" : "Toggle"}
         </button>
-        <button onClick={onEdit}>Edit</button>
-        <button onClick={handleDelete}>Delete</button>
+        <button type="button" onClick={onEdit}>Edit</button>
+        <button type="button" onClick={handleDelete}>Delete</button>
       </div>
     </div>
   );
