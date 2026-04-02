@@ -446,3 +446,14 @@ body {
   font-size: 0.9rem;
   font-weight: 700;
 }
+.tampered-banner {
+  margin-bottom: 18px;
+  padding: 14px 18px;
+  background: #b42318;
+  color: #ffffff;
+  font-weight: 800;
+  text-align: center;
+  border-radius: 14px;
+  letter-spacing: 1px;
+  box-shadow: 0 10px 22px rgba(180, 35, 24, 0.22);
+}
